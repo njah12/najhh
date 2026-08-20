@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتائج الامتحانات الوزارية - منصة نجاح</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
+        body { font-family: 'Tajawal', sans-serif; background-color: #f4f7f6; }
+        .hidden { display: none !important; }
+        @media print {
+            body { background-color: white !important; }
+            .print-hidden { display: none !important; }
+            #report-sidebar { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+            #report-main { border: 1px solid #e5e7eb !important; }
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #3c8e40; border-radius: 4px; }
+        
+        /* Image responsive styles */
+        .responsive-img {
+            max-width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+        
+        @media (max-width: 768px) {
+            .responsive-img {
+                max-height: 50vh;
+            }
+        }
+        
+        /* Lightbox styles for mobile */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .lightbox.active {
+            display: flex;
+        }
+        
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Loading Spinner -->
+    <div id="loading-overlay" class="fixed inset-0 bg-[#f4f7f6] z-50 flex items-center justify-center hidden">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
+    </div>
+
+    <!-- Lightbox for image viewing -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightbox-img" src="" alt="تكبير الصورة">
+    </div>
+
+    <!-- VIEW: HOME -->
+    <div id="view-home" class="view-section flex-grow flex flex-col items-center justify-center p-4">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_of_the_Ministry_of_Education_of_Iraq.png" alt="وزارة التربية" class="w-36 h-36 md:w-40 md:h-40 object-contain mx-auto mb-4 drop-shadow-md">
+        <h1 class="text-3xl font-black text-[#1b3b2c] mt-4 mb-2">نتائج الامتحانات الوزارية</h1>
+        <p class="text-gray-600 mb-10 text-lg">اختر المرحلة الدراسية للاطلاع على النتائج</p>
+
+        <div class="w-full max-w-md space-y-4">
+            <button onclick="goToDirectorate('third')" class="w-full bg-[#416c41] hover:bg-[#355835] text-white rounded-xl py-5 px-6 flex justify-between items-center shadow-lg transition-transform hover:scale-[1.02]">
+                <div class="bg-white/20 p-2 rounded-full">
+                    <svg class="w-6 h-6 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold">الصف الثالث المتوسط</div>
+                    <div class="text-sm font-normal text-white/80 mt-1">انقر للدخول</div>
+                </div>
+            </button>
+
+            <button onclick="goToDirectorate('sixth')" class="w-full bg-[#1b3112] hover:bg-[#12220c] text-white rounded-xl py-5 px-6 flex justify-between items-center shadow-lg transition-transform hover:scale-[1.02]">
+                <div class="bg-white/20 p-2 rounded-full">
+                    <svg class="w-6 h-6 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold">الصف السادس الاعدادي</div>
+                    <div class="text-sm font-normal text-white/80 mt-1">انقر للدخول</div>
+                </div>
+            </button>
+        </div>
+
+        <button onclick="showView('view-create')" class="mt-12 text-sm text-[#416c41] underline font-medium hover:text-[#254125]">
+            إنشاء صفحة (لإدخال نتيجة مقلب)
+        </button>
+        <p class="mt-auto pt-8 pb-4 text-sm text-gray-500">جميع الحقوق محفوظة © 2026 وزارة التربية العراقية.</p>
+    </div>
+
+    <!-- VIEW: DIRECTORATE -->
+    <div id="view-directorate" class="view-section hidden bg-white flex-col flex-grow">
+        <nav class="bg-white py-3 px-6 shadow-sm flex justify-between items-center relative z-20">
+            <div class="hidden md:flex space-x-6 space-x-reverse text-sm font-bold text-gray-700">
+                <span class="hover:text-[#416c41] cursor-pointer">الأخبار والنشاطات</span>
+                <span class="hover:text-[#416c41] cursor-pointer">عن الوزارة</span>
+                <span class="hover:text-[#416c41] cursor-pointer">شؤون المواطنين</span>
+                <span class="hover:text-[#416c41] cursor-pointer">موقع الوزارة</span>
+            </div>
+            <div class="flex items-center space-x-3 space-x-reverse cursor-pointer" onclick="showView('view-home')">
+                <div class="text-right leading-tight">
+                    <div class="font-bold text-sm text-gray-900">جمهورية العراق</div>
+                    <div class="font-bold text-sm text-gray-900">وزارة التربية</div>
+                </div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_of_the_Ministry_of_Education_of_Iraq.png" alt="Logo" class="w-14 h-14 object-contain">
+            </div>
+        </nav>
+
+        <div class="flex-grow flex flex-col items-center justify-center p-6 text-center relative overflow-hidden bg-[#f4f7f6]">
+            <h2 class="text-3xl md:text-5xl font-black text-[#1a1a1a] leading-tight mb-6 z-10">
+                تحقق من نتيجتك الامتحانية بسهولة<br/>ضمن نتائج الامتحانات الوزارية
+            </h2>
+            <div class="bg-white p-2 rounded-2xl shadow-sm border border-gray-200 flex flex-col md:flex-row gap-2 z-10 w-full max-w-xl">
+                <select id="directorate-select" class="flex-grow p-4 bg-transparent outline-none border-b md:border-b-0 md:border-l border-gray-200 text-gray-700 font-medium w-full">
+                    <option value="">اختر مديريتك التعليمية</option>
+                    <option value="الكرخ الاولى">الكرخ الاولى</option>
+                    <option value="الكرخ الثانية">الكرخ الثانية</option>
+                    <option value="الكرخ الثالثة">الكرخ الثالثة</option>
+                    <option value="الرصافة الاولى">الرصافة الاولى</option>
+                    <option value="الرصافة الثانية">الرصافة الثانية</option>
+                    <option value="الرصافة الثالثة">الرصافة الثالثة</option>
+                    <option value="البصرة">البصرة</option>
+                    <option value="نينوى">نينوى</option>
+                    <option value="كركوك">كركوك</option>
+                    <option value="النجف الاشرف">النجف الاشرف</option>
+                    <option value="كربلاء المقدسة">كربلاء المقدسة</option>
+                    <option value="ذي قار">ذي قار</option>
+                    <option value="ديالى">ديالى</option>
+                    <option value="الانبار">الانبار</option>
+                    <option value="ميسان">ميسان</option>
+                    <option value="المثنى">المثنى</option>
+                    <option value="القادسية">القادسية</option>
+                    <option value="بابل">بابل</option>
+                    <option value="واسط">واسط</option>
+                    <option value="صلاح الدين">صلاح الدين</option>
+                </select>
+                <button onclick="startLoginFlow()" class="bg-[#79b476] hover:bg-[#639860] text-white px-8 py-4 rounded-xl font-bold whitespace-nowrap transition-colors w-full md:w-auto">
+                    الانتقال الى واجهة الطالب
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW: LOGIN -->
+    <div id="view-login" class="view-section hidden flex-grow flex items-center justify-center p-4 bg-[#f4f7f6]">
+        <div class="bg-white rounded-[2rem] shadow-xl w-full max-w-[420px] p-8 relative">
+            <button onclick="showView('view-directorate')" class="absolute top-6 right-6 text-gray-400 hover:text-gray-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+
+            <div class="flex flex-col items-center mb-8">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_of_the_Ministry_of_Education_of_Iraq.png" alt="Logo" class="w-28 h-28 object-contain mb-3">
+                <h2 class="text-2xl font-black text-gray-900 mt-2">تسجيل الدخول</h2>
+                <p class="text-sm text-gray-500 mt-1">اللجنة الدائمة للامتحانات العامة لعام 2026/2025</p>
+                <p class="text-xs text-gray-400 mt-3 text-center px-4">يرجى إدخال المعلومات بشكل صحيح لتسجيل الدخول إلى المنصة.</p>
+            </div>
+
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">الرقم الامتحاني</label>
+                    <input type="text" id="search-exam-id" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3f8c42] outline-none transition-all bg-white text-left font-semibold shadow-sm" dir="ltr" placeholder="ادخل الرقم الامتحاني">
+                </div>
+                <div>
+                    <label id="captcha-label" class="block text-sm font-bold text-gray-800 mb-2 text-right" dir="rtl"></label>
+                    <input type="number" id="captcha-input" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3f8c42] outline-none transition-all bg-white text-left font-semibold shadow-sm" dir="ltr" placeholder="اكتب الناتج هنا">
+                </div>
+
+                <div id="login-error" class="p-3 bg-red-50 text-red-700 text-sm rounded-lg hidden"></div>
+                <div id="login-timer" class="text-right font-black text-[#1a1a1a] text-sm py-1">01:56</div>
+
+                <button type="submit" class="w-full bg-[#3c8e40] hover:bg-[#2d6b30] text-white font-bold py-4 rounded-xl transition-colors mt-2 shadow-md">
+                    تسجيل الدخول
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- VIEW: SIXTH LOGIN -->
+    <div id="view-sixth-login" class="view-section hidden flex-grow flex items-center justify-center p-4 bg-[#f4f7f6]">
+        <div class="bg-white rounded-[2rem] shadow-xl w-full max-w-[420px] p-8 relative">
+            <button onclick="showView('view-directorate')" class="absolute top-6 right-6 text-gray-400 hover:text-gray-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+
+            <div class="flex flex-col items-center mb-8">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_of_the_Ministry_of_Education_of_Iraq.png" alt="Logo" class="w-28 h-28 object-contain mb-3">
+                <h2 class="text-2xl font-black text-gray-900 mt-2">تسجيل الدخول - السادس الاعدادي</h2>
+                <p class="text-sm text-gray-500 mt-1">اللجنة الدائمة للامتحانات العامة لعام 2026/2025</p>
+                <p class="text-xs text-gray-400 mt-3 text-center px-4">يرجى إدخال الرقم الامتحاني والرقم السري للدخول.</p>
+            </div>
+
+            <form id="sixth-login-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">الرقم الامتحاني</label>
+                    <input type="text" id="sixth-exam-id" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3f8c42] outline-none transition-all bg-white text-left font-semibold shadow-sm" dir="ltr" placeholder="ادخل الرقم الامتحاني">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-2">الرقم السري</label>
+                    <input type="password" id="sixth-password" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3f8c42] outline-none transition-all bg-white text-left font-semibold shadow-sm" dir="ltr" placeholder="ادخل الرقم السري">
+                </div>
+
+                <div id="sixth-login-error" class="p-3 bg-red-50 text-red-700 text-sm rounded-lg hidden"></div>
+
+                <button type="submit" class="w-full bg-[#3c8e40] hover:bg-[#2d6b30] text-white font-bold py-4 rounded-xl transition-colors mt-2 shadow-md">
+                    تسجيل الدخول
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- VIEW: CREATE -->
+    <div id="view-create" class="view-section hidden flex-grow py-8 px-4 bg-[#f4f7f6]">
+        <div class="max-w-3xl mx-auto bg-white rounded-[2rem] shadow-xl p-6 md:p-8">
+            <div class="flex items-center justify-between mb-6 pb-6 border-b border-gray-100">
+                <div>
+                    <h2 class="text-2xl font-black text-gray-900">إعداد نتيجة مقلب</h2>
+                    <p class="text-sm text-gray-500 mt-1">قم بإنشاء صفحة وتخصيص المواد لتظهر في المنصة</p>
+                </div>
+                <button onclick="showView('view-home')" class="text-gray-400 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+
+            <form id="create-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">الاسم الرباعي</label>
+                        <input type="text" id="create-name" required class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#3c8e40]">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">الرقم الامتحاني</label>
+                        <input type="text" id="create-id" required class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#3c8e40]">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">المدرسة</label>
+                        <input type="text" id="create-school" class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#3c8e40]">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">المديرية</label>
+                        <input type="text" id="create-directorate" class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#3c8e40]">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">الفرع</label>
+                        <input type="text" id="create-branch" class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#3c8e40]">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">الدور</label>
+                        <input type="text" id="create-round" class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#3c8e40]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">اختر المرحلة (لتحميل المواد الافتراضية)</label>
+                    <select id="create-grade" required class="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-[#3c8e40]" onchange="initSubjects()">
+                        <option value="">اختر المرحلة...</option>
+                        <option value="third">الثالث المتوسط</option>
+                        <option value="sixth">السادس الإعدادي</option>
+                    </select>
+                </div>
+
+                <div id="subjects-container" class="pt-6 border-t border-gray-100 hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">المواد والدرجات</h3>
+                        <button type="button" onclick="addCustomSubject()" class="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-md font-bold hover:bg-blue-100">+ إضافة مادة</button>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-2">يمكنك كتابة أرقام (90) أو نصوص (غ، مؤجل). يمكنك تعديل أسماء المواد أيضاً.</div>
+                    <div id="subjects-list" class="space-y-2"></div>
+                </div>
+
+                <div class="pt-6 border-t border-gray-100 bg-gray-50 p-4 rounded-xl mt-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-3">النتيجة النهائية (تخصيص يدوي)</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">المجموع</label>
+                            <input type="text" id="create-total" class="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">المعدل</label>
+                            <input type="text" id="create-average" class="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">النتيجة</label>
+                            <input type="text" id="create-status" class="w-full px-3 py-2 border border-gray-200 rounded-lg outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="create-error" class="p-3 bg-red-50 text-red-700 text-sm rounded-lg hidden"></div>
+
+                <div class="flex justify-end pt-4 border-t border-gray-100">
+                    <button type="submit" class="bg-[#3c8e40] hover:bg-[#2d6b30] text-white font-bold py-3 px-8 rounded-xl transition-colors">
+                        حفظ النتيجة وإصدارها
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- VIEW: IMAGES DISPLAY -->
+    <div id="view-pdf" class="view-section hidden bg-[#f4f7f6] py-8 px-4 flex-grow flex flex-col">
+        <div class="max-w-5xl mx-auto flex justify-between items-center mb-6 print-hidden">
+            <button onclick="showView('view-home')" class="text-sm font-bold text-gray-500 hover:text-gray-800">
+                العودة للرئيسية
+            </button>
+            <h2 class="text-xl font-black text-gray-900">ملف النتائج - السادس الاعدادي</h2>
+        </div>
+
+        <div class="flex-grow flex items-center justify-center">
+            <div class="w-full max-w-5xl bg-white rounded-xl shadow-lg p-4 md:p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                    <div class="relative group">
+                        <img src="ph1.jpg" alt="النتيجة 1" class="responsive-img w-full rounded-lg shadow-md cursor-pointer transition-transform hover:scale-105">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg"></div>
+                    </div>
+                    <div class="relative group">
+                        <img src="ph2.jpg" alt="النتيجة 2" class="responsive-img w-full rounded-lg shadow-md cursor-pointer transition-transform hover:scale-105">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg"></div>
+                    </div>
+                </div>
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-500">انقر على الصورة لتكبيرها</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW: RESULT -->
+    <div id="view-result" class="view-section hidden bg-[#f4f7f6] py-8 px-4 flex-grow">
+        <div class="max-w-5xl mx-auto flex justify-between items-center mb-6 print-hidden">
+            <button onclick="showView('view-home')" class="text-sm font-bold text-gray-500 hover:text-gray-800">
+                العودة للرئيسية
+            </button>
+            <button onclick="window.print()" class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-gray-700">
+                طباعة النتيجة
+            </button>
+        </div>
+
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row gap-6">
+            <div id="report-sidebar" class="bg-white rounded-xl shadow-lg p-6 md:p-8 w-full md:w-[35%] flex flex-col relative h-fit">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="text-right leading-tight">
+                        <div class="font-bold text-sm text-gray-900">جمهورية العراق</div>
+                        <div class="font-bold text-sm text-gray-900">وزارة التربية</div>
+                    </div>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_of_the_Ministry_of_Education_of_Iraq.png" alt="Logo" class="w-20 h-20 object-contain">
+                </div>
+                <h2 class="text-xl font-black text-gray-900 text-center mb-8 leading-relaxed">
+                    اللجنة الدائمة<br>
+                    للامتحانات العامة<br>
+                    لعام 2026/2025
+                </h2>
+
+                <div class="space-y-4 text-sm w-full border-t border-gray-100 pt-6">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">الاسم</span>
+                        <span id="res-name" class="font-black text-base text-gray-900 truncate pr-4 text-left w-[70%]"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">المدرسة</span>
+                        <span id="res-school" class="font-bold text-gray-900 truncate pr-4 text-left w-[70%]"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">المديرية</span>
+                        <span id="res-directorate" class="font-bold text-gray-900"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">الفرع</span>
+                        <span id="res-branch" class="font-bold text-gray-900"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">الدور</span>
+                        <span id="res-round" class="font-bold text-gray-900"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">المجموع</span>
+                        <span id="res-total" class="font-bold text-gray-900"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">المعدل</span>
+                        <span id="res-average" class="font-bold text-gray-900"></span>
+                    </div>
+                    <div class="flex items-center justify-between mt-4">
+                        <span class="text-gray-500">النتيجة النهائية</span>
+                        <span id="res-status" class="font-bold px-4 py-1.5 rounded-md text-red-800 bg-[#fae8e8]"></span>
+                    </div>
+                </div>
+
+                <div class="mt-10 pt-6 border-t border-gray-100 print-hidden">
+                    <button onclick="showView('view-home')" class="w-full flex items-center justify-center py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">
+                        تسجيل الخروج
+                        <svg class="w-4 h-4 mr-2 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="w-full md:w-[65%]">
+                <div id="report-main" class="bg-white rounded-none border border-gray-200 p-8">
+                    <div class="text-left mb-4">
+                        <h3 class="text-lg font-black text-gray-900">معلومات النتيجة</h3>
+                    </div>
+                    <div class="w-full text-sm">
+                        <div class="flex justify-between items-center py-3 px-4 border-b border-gray-100 font-bold text-gray-900">
+                            <div class="w-1/2 text-right">المادة</div>
+                            <div class="w-1/2 text-left">الدرجة</div>
+                        </div>
+                        <div id="res-marks-body" class="flex flex-col"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="text-center text-xs text-gray-400 mt-8 print-hidden">جميع الحقوق محفوظة © 2026 وزارة التربية العراقية.</p>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCY5cMcq9HRvSj6ZANalENbfDVHlxIvZVc",
+            authDomain: "fake-najah.firebaseapp.com",
+            projectId: "fake-najah",
+            storageBucket: "fake-najah.firebasestorage.app",
+            messagingSenderId: "694624783437",
+            appId: "1:694624783437:web:1f2c522f02f0c8d725e004",
+            measurementId: "G-HZ1GQ9YE1G"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const isPreviewEnv = typeof __firebase_config !== 'undefined';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'fake_najah';
+
+        const ensureAuth = async () => {
+            if (!auth.currentUser) {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else if (firebaseConfig.apiKey !== "PUT_YOUR_API_KEY_HERE") {
+                    await signInAnonymously(auth);
+                }
+            }
+        };
+
+        ensureAuth().catch(err => console.error("Initial Auth Error:", err));
+
+        const THIRD_SUBJECTS = ['الاسلامية', 'العربية', 'الانكليزية', 'الرياضيات', 'الاجتماعيات', 'الاحياء', 'الكيمياء', 'الفيزياء'];
+        const SIXTH_SUBJECTS = ['الاسلامية', 'العربية', 'الانكليزية', 'الاحياء', 'الرياضيات', 'الكيمياء', 'الفيزياء'];
+        let captchaAns = 0;
+        let timerInterval;
+        let customSubjectsList = [];
+        let currentGrade = null;
+
+        window.showView = (id) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if (id !== 'view-login' && id !== 'view-sixth-login') clearInterval(timerInterval);
+            
+            // Close lightbox when switching views
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox) {
+                lightbox.classList.remove('active');
+            }
+        };
+
+        window.goToDirectorate = (grade) => {
+            currentGrade = grade;
+            showView('view-directorate');
+        };
+
+        window.startLoginFlow = () => {
+            if (currentGrade === 'sixth') {
+                document.getElementById('sixth-exam-id').value = '';
+                document.getElementById('sixth-password').value = '';
+                document.getElementById('sixth-login-error').classList.add('hidden');
+                showView('view-sixth-login');
+            } else {
+                let n1 = Math.floor(Math.random() * 20) + 1;
+                let n2 = Math.floor(Math.random() * 20) + 1;
+                captchaAns = n1 + n2;
+
+                document.getElementById('captcha-label').innerText = `كم حاصل جمع ${n1} + ${n2}؟`;
+                document.getElementById('captcha-input').value = '';
+                document.getElementById('search-exam-id').value = '';
+                document.getElementById('login-error').classList.add('hidden');
+
+                let timeLeft = 116;
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                    let s = (timeLeft % 60).toString().padStart(2, '0');
+                    document.getElementById('login-timer').innerText = `${m}:${s}`;
+                    if(timeLeft <= 0) clearInterval(timerInterval);
+                }, 1000);
+
+                showView('view-login');
+            }
+        };
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errBox = document.getElementById('login-error');
+
+            if (parseInt(document.getElementById('captcha-input').value) !== captchaAns) {
+                errBox.innerText = 'الجواب على العملية الحسابية غير صحيح.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            const examId = document.getElementById('search-exam-id').value.trim();
+            errBox.classList.add('hidden');
+            document.getElementById('loading-overlay').classList.remove('hidden');
+
+            try {
+                await ensureAuth();
+                const docRef = isPreviewEnv ? doc(db, 'artifacts', appId, 'public', 'data', 'students', examId) : doc(db, "fake_students", examId);
+                const snap = await getDoc(docRef);
+
+                if (snap.exists()) {
+                    renderResultCard(snap.data());
+                    showView('view-result');
+                } else {
+                    errBox.innerText = 'الرقم الامتحاني غير موجود. يرجى التأكد من الرقم.';
+                    errBox.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                errBox.innerText = 'حدث خطأ: ' + error.message;
+                errBox.classList.remove('hidden');
+            }
+            document.getElementById('loading-overlay').classList.add('hidden');
+        });
+
+        document.getElementById('sixth-login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errBox = document.getElementById('sixth-login-error');
+
+            const examId = document.getElementById('sixth-exam-id').value.trim();
+            const password = document.getElementById('sixth-password').value.trim();
+
+            if (examId !== '19233276712' || password !== '1342348772') {
+                errBox.innerText = 'الرقم الامتحاني أو الرقم السري غير صحيح.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            errBox.classList.add('hidden');
+            document.getElementById('loading-overlay').classList.remove('hidden');
+
+            // Show PDF after successful login
+            setTimeout(() => {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                showPDF();
+            }, 1000);
+        });
+
+        window.initSubjects = () => {
+            const grade = document.getElementById('create-grade').value;
+            if (!grade) {
+                document.getElementById('subjects-container').classList.add('hidden');
+                return;
+            }
+            customSubjectsList = grade === 'third' ? [...THIRD_SUBJECTS] : [...SIXTH_SUBJECTS];
+            renderSubjectsDOM();
+        };
+
+        window.addCustomSubject = () => {
+            customSubjectsList.push('مادة جديدة');
+            renderSubjectsDOM();
+        };
+
+        window.removeSubject = (index) => {
+            customSubjectsList.splice(index, 1);
+            renderSubjectsDOM();
+        };
+
+        window.renderSubjectsDOM = () => {
+            document.getElementById('subjects-container').classList.remove('hidden');
+            const list = document.getElementById('subjects-list');
+            list.innerHTML = '';
+
+            customSubjectsList.forEach((sub, i) => {
+                list.innerHTML += `
+                    <div class="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-200 subject-row">
+                        <input type="text" class="sub-name w-1/2 p-2 border border-gray-300 rounded text-sm outline-none" value="${sub}" placeholder="اسم المادة">
+                        <input type="text" class="sub-mark w-1/2 p-2 border border-gray-300 rounded text-sm text-center outline-none" placeholder="الدرجة (مثلاً: 90 أو غ)">
+                        <button type="button" onclick="removeSubject(${i})" class="text-red-500 px-2 font-bold hover:bg-red-50 rounded">X</button>
+                    </div>
+                `;
+            });
+        };
+
+        document.getElementById('create-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            document.getElementById('loading-overlay').classList.remove('hidden');
+
+            const examId = document.getElementById('create-id').value.trim();
+            const errBox = document.getElementById('create-error');
+            errBox.classList.add('hidden');
+
+            let marksArray = [];
+            document.querySelectorAll('.subject-row').forEach(row => {
+                const name = row.querySelector('.sub-name').value.trim();
+                const mark = row.querySelector('.sub-mark').value.trim();
+                if (name) marksArray.push({ name: name, mark: mark });
+            });
+
+            const dataToSave = {
+                name: document.getElementById('create-name').value,
+                examNumber: examId,
+                school: document.getElementById('create-school').value || 'خارجيات-اعدادي',
+                directorate: document.getElementById('create-directorate').value || 'ذي قار',
+                branch: document.getElementById('create-branch').value || 'علمي',
+                round: document.getElementById('create-round').value || 'تمهيدي',
+                marks: marksArray,
+                total: document.getElementById('create-total').value || '0',
+                average: document.getElementById('create-average').value || '%0',
+                status: document.getElementById('create-status').value || 'مؤهل'
+            };
+
+            try {
+                await ensureAuth();
+                const docRef = isPreviewEnv ? doc(db, 'artifacts', appId, 'public', 'data', 'students', examId) : doc(db, "fake_students", examId);
+                await setDoc(docRef, dataToSave);
+                renderResultCard(dataToSave);
+                showView('view-result');
+                document.getElementById('create-form').reset();
+            } catch (error) {
+                console.error("Save Error:", error);
+                errBox.innerText = 'حدث خطأ أثناء الحفظ: ' + error.message;
+                errBox.classList.remove('hidden');
+            }
+            document.getElementById('loading-overlay').classList.add('hidden');
+        });
+
+        function renderResultCard(data) {
+            document.getElementById('res-name').innerText = data.name || '---';
+            document.getElementById('res-school').innerText = data.school || '---';
+            document.getElementById('res-directorate').innerText = data.directorate || '---';
+            document.getElementById('res-branch').innerText = data.branch || '---';
+            document.getElementById('res-round').innerText = data.round || '---';
+            document.getElementById('res-total').innerText = data.total || '0';
+            document.getElementById('res-average').innerText = data.average || '%0';
+
+            let statusEl = document.getElementById('res-status');
+            statusEl.innerText = data.status || '---';
+
+            let tbody = document.getElementById('res-marks-body');
+            tbody.innerHTML = '';
+
+            let marksList = [];
+            if (Array.isArray(data.marks)) {
+                marksList = data.marks;
+            } else if (typeof data.marks === 'object' && data.marks !== null) {
+                marksList = Object.keys(data.marks).map(key => ({ name: key, mark: data.marks[key] }));
+            }
+
+            marksList.forEach((item) => {
+                let isFail = false;
+                if (item.mark === 'غ') isFail = true;
+                else if (!isNaN(parseInt(item.mark)) && parseInt(item.mark) < 50) isFail = true;
+
+                let rowColor = isFail ? 'bg-[#fae8e8]' : 'bg-white';
+
+                tbody.innerHTML += `
+                    <div class="flex justify-between items-center py-3 px-4 border-b border-gray-100 ${rowColor}">
+                        <div class="w-1/2 text-right font-semibold text-gray-800">${item.name}</div>
+                        <div class="w-1/2 text-left font-bold ${isFail ? 'text-red-700' : 'text-gray-900'}">${item.mark}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function showPDF() {
+            // Simply show the view with images
+            showView('view-pdf');
+            
+            // Setup lightbox functionality
+            setupLightbox();
+        }
+        
+        function setupLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const closeBtn = document.querySelector('.lightbox-close');
+            const images = document.querySelectorAll('#view-pdf img.responsive-img');
+            
+            // Remove existing event listeners to avoid duplicates
+            images.forEach(img => {
+                img.onclick = null;
+            });
+            
+            // Add click event to images
+            images.forEach(img => {
+                img.onclick = function() {
+                    lightboxImg.src = this.src;
+                    lightbox.classList.add('active');
+                };
+            });
+            
+            // Close lightbox when clicking close button
+            closeBtn.onclick = function() {
+                lightbox.classList.remove('active');
+            };
+            
+            // Close lightbox when clicking outside the image
+            lightbox.onclick = function(e) {
+                if (e.target === lightbox) {
+                    lightbox.classList.remove('active');
+                }
+            };
+            
+            // Close lightbox on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                    lightbox.classList.remove('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
